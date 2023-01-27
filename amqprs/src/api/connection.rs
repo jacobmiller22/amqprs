@@ -432,7 +432,13 @@ impl TryFrom<&str> for OpenConnectionArguments {
             .ok_or_else(|| Error::UriError(String::from("No URI scheme")))?
             .as_str();
 
-        if !["amqp", "amqps"].contains(&scheme) {
+        // Set valid schemes based on the tls feature flags.
+        let valid_schemes: Vec<&str> = match cfg!(feature = "tls") {
+            true => vec!["amqp", "amqps"],
+            false => vec!["amqp"],
+        };
+
+        if !valid_schemes.contains(&scheme) {
             return Err(Error::UriError(format!(
                 "Unsupported URI scheme: {}",
                 scheme
